@@ -1,0 +1,20 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "no-console": 1, // Remember, this means error!
+    "@typescript-eslint/explicit-module-boundary-types": ["off"],
+    "@typescript-eslint/explicit-function-return-type": ["off"],
+    "@typescript-eslint/ban-ts-comment": ["warn"]
+  },
+  "env": {
+    "node": true,
+    "commonjs": true
+  }
+}
