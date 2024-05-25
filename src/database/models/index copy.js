@@ -1,14 +1,9 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-"use strict";
-
-// const fs = require("fs");
-// const path = require("path");
-// const Sequelize = require("sequelize");
-// const envConfigs = require("../config/config");
 import fs from "fs";
 import path from "path";
 import { Sequelize } from "sequelize";
 import envConfigs from "../config/config";
+import initUserModel from "./user.js"; // Import the User model initialization function
+import { UserAttributes, UserInstance } from ".";
 
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";
@@ -27,18 +22,25 @@ if (config.url) {
   );
 }
 
+// Initialize the User model
+db.User = initUserModel(sequelize);
+
+// Dynamically import other models if any
 fs.readdirSync(__dirname)
   .filter((file) => {
     return (
       file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
     );
   })
-  .forEach((file) => {
-    const model = require(path.join(__dirname, file))(
-      sequelize,
-      Sequelize.DataTypes
-    );
-    db[model.name] = model;
+  .forEach(async (file) => {
+    if (file !== "User.js") {
+      // Skip User.js since it's already imported
+      const model = (await import(path.join(__dirname, file))).default(
+        sequelize,
+        Sequelize.DataTypes
+      );
+      db[model.name] = model;
+    }
   });
 
 Object.keys(db).forEach((modelName) => {
@@ -49,5 +51,7 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.Op = Sequelize.Op; // Add Op to the export
 
-module.exports = db;
+export default db;
+export { sequelize, Sequelize, Op, User, UserAttributes, UserInstance };

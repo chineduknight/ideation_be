@@ -1,9 +1,11 @@
 import { Router } from "express";
-import auth from "./auth";
+import authRoutes from "./auth";
+import noteRoutes from "./note";
 
 const router = Router();
 
 // Mount routers
-router.use("/users", auth);
+router.use("/users", authRoutes);
+router.use("/notes", noteRoutes);
 
 export default router;

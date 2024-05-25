@@ -2,16 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import { getSignedJwtToken } from "../../../utils/signToken";
 import ErrorResponse from "../../../utils/errorResponse";
 import asyncHandler from "../../middleware/async";
-import * as Model from "../../../database/models";
 import jwt from "jsonwebtoken";
 import sendEmail from "../../../utils/Handlebars";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { validateEmail } from "utils/validateStringType";
-const {
-  User,
-  Sequelize: { Op },
-} = Model;
+import { User, Op, UserAttributes } from "database/models";
+// import * as Model from "database/models";
+// console.log("Model:", Model.User);
+// console.log("User:---", User);
+
 // @desc      Register user
 // @route     POST /api/v1/auth/register
 // @access    Public
@@ -36,11 +36,12 @@ export const register = asyncHandler(
     }
 
     // Create user
+    // Create user
     const user = await User.create({
       username: userName.toLowerCase(),
       email: email.toLowerCase(),
       password: password,
-    });
+    } as UserAttributes);
     // Generate verification token
     const verificationToken = user.generateVerificationToken();
 
@@ -280,8 +281,8 @@ export const resetPassword = asyncHandler(
     }
 
     user.password = req.body.password;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
 
     sendTokenResponse(user, 200, res);

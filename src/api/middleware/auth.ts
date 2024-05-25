@@ -1,9 +1,12 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "./async";
 import ErrorResponse from "utils/errorResponse";
-import * as Model from "database/models";
-const { User } = Model;
+import db from "database/models";
+console.log("db:", db);
+// import { User, Op, UserAttributes } from "database/models";
 
+const { User } = db;
+console.log("User:", User);
 // Protect routes
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -11,7 +14,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   if (authToken) {
     token = authToken;
   } else {
-    token = req.cookies.token;
+    token = req?.cookies?.token;
   }
 
   // Make sure token exists

@@ -1,7 +1,6 @@
 import ErrorResponse from "../../utils/errorResponse";
-import "colors"
-import sentry from 'utils/sentry'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import "colors";
+// import sentry from "utils/sentry";
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
@@ -26,23 +25,30 @@ const errorHandler = (err, req, res, next) => {
 
   // Mongoose Validation Error
   if (err.name === "ValidationError") {
-    const message = Object.values(err.errors).map((value: any) => value.message);
+    const message = Object.values(err.errors).map(
+      (value: any) => value.message
+    );
     error = new ErrorResponse(message, 400);
   }
   // sequlize validation Error
   if (err.name === "SequelizeUniqueConstraintError") {
-    const message = Object.values(err.errors).map((value: any) => value.message);
-    error = new ErrorResponse("A validation error has occured, the value already exists " + message, 400);
+    const message = Object.values(err.errors).map(
+      (value: any) => value.message
+    );
+    error = new ErrorResponse(
+      "A validation error has occured, the value already exists " + message,
+      400
+    );
   }
   // Invalid UUID sequelize
   if (err.name === "SequelizeDatabaseError") {
-    const message = "Invalid Id please check the id, SequelizeDBError"
+    const message = "Invalid Id please check the id, SequelizeDBError";
     error = new ErrorResponse(message, 400);
   }
 
   if (!error.statusCode) {
-    error.statusCode = 500
-    sentry.captureException(err);
+    error.statusCode = 500;
+    // sentry.captureException(err); can send error to sentry
   }
 
   res.status(error.statusCode).json({

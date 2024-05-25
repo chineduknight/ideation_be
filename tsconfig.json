@@ -13,10 +13,14 @@
     "strict": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["@types", "./node_modules/@types"],
     "resolveJsonModule": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["./**/*"],
-  "exclude": ["./build/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "src/database/models/index.js",
+    "src/database/models/user.js"
+  ],
+  "exclude": ["build"]
 }
