@@ -6,6 +6,7 @@ import * as Model from "../../../database/models";
 import jwt from "jsonwebtoken";
 import sendEmail from "../../../utils/Handlebars";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { validateEmail } from "utils/validateStringType";
 const {
   User,
@@ -34,13 +35,11 @@ export const register = asyncHandler(
       return next(new ErrorResponse("This username already taken", 400));
     }
 
-    let hashed = password;
-
     // Create user
     const user = await User.create({
       username: userName.toLowerCase(),
       email: email.toLowerCase(),
-      password: hashed,
+      password: password,
     });
     // Generate verification token
     const verificationToken = user.generateVerificationToken();
@@ -202,5 +201,104 @@ export const getMe = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: user,
+  });
+});
+
+// @desc      Starts password reset process
+// @route     POST /api/v1/auth/forgotPassword
+// @access    Public
+export const forgotPassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ where: { email: email.toLowerCase() } });
+
+    if (!user) {
+      return next(new ErrorResponse("There is no user with that email", 404));
+    }
+
+    const resetToken = user.generateResetPasswordToken();
+    await user.save();
+
+    const resetUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/auth/resetpassword/${resetToken}`;
+
+    const data = {
+      to: user.email,
+      from: {
+        name: "Chinedu Knight",
+        address: "chineduknight@gmail.com",
+      },
+      template: "resetPassword",
+      subject: "Password reset token",
+      context: {
+        name: user.username,
+        resetUrl,
+      },
+    };
+
+    try {
+      await sendEmail.send(data);
+
+      res.status(200).json({
+        success: true,
+        data: "An email has been sent to your address",
+      });
+    } catch (err) {
+      console.error(err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+
+      return next(new ErrorResponse("Email could not be sent", 500));
+    }
+  }
+);
+
+// @desc      Resets password
+// @route     PUT /api/v1/auth/resetPassword
+// @access    Public
+export const resetPassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(req.params.resettoken)
+      .digest("hex");
+
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken,
+        resetPasswordExpires: {
+          [Op.gt]: Date.now(),
+        },
+      },
+    });
+
+    if (!user) {
+      return next(new ErrorResponse("Invalid token", 400));
+    }
+
+    user.password = req.body.password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    sendTokenResponse(user, 200, res);
+  }
+);
+
+// @desc     Logout User
+// @route     GET /api/v1/auth/logout
+// @access    Public
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  res.cookie("token", "none", {
+    expires: new Date(Date.now() + 10 * 1000), // 10 seconds in the past
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {},
   });
 });

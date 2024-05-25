@@ -1,10 +1,31 @@
 import { protect } from "api/middleware/auth";
-import { register, verifyEmail, login, getMe } from "../controllers/auth/auth";
+import {
+  register,
+  verifyEmail,
+  login,
+  getMe,
+  forgotPassword,
+  resetPassword,
+  logout,
+} from "../controllers/auth/auth";
 import { Router } from "express";
+import AuthValidator from "api/controllers/auth/authValidator";
 const router = Router();
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", AuthValidator.validate("register"), register);
+router.post("/login", AuthValidator.validate("login"), login);
 router.get("/verifyemail", verifyEmail);
 router.get("/me", protect, getMe);
+router.post(
+  "/forgotpassword",
+  AuthValidator.validate("checkEmail"),
+  forgotPassword
+);
+router.put(
+  "/resetpassword/:resettoken",
+  AuthValidator.validate("resetPassword"),
+  resetPassword
+);
+router.get("/logout", logout);
+
 export default router;

@@ -2,20 +2,30 @@
 import { Model, DataTypes } from "sequelize";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
-// const bcryptjs = require(bcryptjs)
-// const { Model,DataTypes } = require("sequelize");
-
+import crypto from 'crypto';
 module.exports = (sequelize) => {
   class User extends Model {
     validatePassword = async (password) => {
       return await bcrypt.compare(password, this.password);
     };
-      generateVerificationToken() {
-    const verificationToken = jwt.sign({ id: this.id }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
-    return verificationToken;
-  }
+    generateVerificationToken() {
+      const verificationToken = jwt.sign({ id: this.id }, process.env.JWT_SECRET, {
+        expiresIn: '1d',
+      });
+      return verificationToken;
+    }
+    generateResetPasswordToken() {
+      const resetToken = crypto.randomBytes(20).toString('hex');
+
+      this.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+      this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      return resetToken;
+    }
   }
 
   User.init(
@@ -79,7 +89,7 @@ module.exports = (sequelize) => {
       },
     }
   );
-User.prototype.toJSON = function () {
+  User.prototype.toJSON = function () {
     var values = Object.assign({}, this.get());
     delete values.password;
     return values;
