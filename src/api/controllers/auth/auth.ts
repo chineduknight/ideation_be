@@ -7,17 +7,17 @@ import sendEmail from "../../../utils/Handlebars";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { validateEmail } from "utils/validateStringType";
-import { User, Op, UserAttributes } from "database/models";
-// import * as Model from "database/models";
-// console.log("Model:", Model.User);
-// console.log("User:---", User);
+import { User, UserAttributes } from "database/models/user";
+import { Op } from "sequelize";
 
 // @desc      Register user
 // @route     POST /api/v1/auth/register
 // @access    Public
 export const register = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { userName, email, password } = req.body;
+    const { username, email, password } = req.body;
+    console.log("userName:", username);
+    // console.log("email:", email)
 
     const existingEmail = await User.findOne({
       where: { email: email.toLowerCase() },
@@ -28,7 +28,7 @@ export const register = asyncHandler(
 
     const existingUserName = await User.findOne({
       where: {
-        username: userName.toLowerCase(),
+        username: username.toLowerCase(),
       },
     });
     if (existingUserName) {
@@ -38,7 +38,7 @@ export const register = asyncHandler(
     // Create user
     // Create user
     const user = await User.create({
-      username: userName.toLowerCase(),
+      username: username.toLowerCase(),
       email: email.toLowerCase(),
       password: password,
     } as UserAttributes);
@@ -60,7 +60,7 @@ export const register = asyncHandler(
       template: "verifyEmail",
       subject: "Email Verification",
       context: {
-        name: userName,
+        name: username,
         verificationUrl,
       },
     };
@@ -169,14 +169,14 @@ export const login = asyncHandler(async (req, res, next) => {
   const { userNameOrEmail, password } = req.body;
   res.frompostman = req.headers.frompostman;
   const dataType = validateEmail(userNameOrEmail) ? "email" : "username";
+  console.log("dataType:", dataType);
   // Check for user
   const user = await User.findOne({
     where: { [dataType]: { [Op.iLike]: userNameOrEmail.toLowerCase() } },
-    attributes: ["password", "id", "email", "username"],
   });
 
   if (!user || !user.password) {
-    return next(new ErrorResponse("Invalid credentials..", 404));
+    return next(new ErrorResponse("Invalid credentials....", 404));
   }
   if (!user.isVerified) {
     return next(new ErrorResponse("Please verify your email", 404));

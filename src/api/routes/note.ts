@@ -1,9 +1,8 @@
-// src/api/routes/note.ts
 import express from "express";
 import {
   getNotes,
-  getNote,
   createNote,
+  getNote,
   updateNote,
   deleteNote,
 } from "api/controllers/note/note";

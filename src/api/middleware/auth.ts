@@ -1,12 +1,8 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "./async";
 import ErrorResponse from "utils/errorResponse";
-import db from "database/models";
-console.log("db:", db);
-// import { User, Op, UserAttributes } from "database/models";
+import { User } from "database/models/user";
 
-const { User } = db;
-console.log("User:", User);
 // Protect routes
 export const protect = asyncHandler(async (req, res, next) => {
   let token;

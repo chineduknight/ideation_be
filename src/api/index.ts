@@ -9,6 +9,7 @@ import xss from "xss-clean";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import cors from "cors";
+import sequelize from "database/config/config";
 const app = express();
 
 // Body parser
@@ -60,9 +61,36 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3443;
-app.listen(PORT, () => {
-  console.log(
-    `⚡️[server]: Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
-      .yellow.bold
-  );
-});
+
+const startServer = async () => {
+  try {
+    await sequelize.sync({ alter: true }); // For development, use { alter: true } for production
+    console.log("Database synced");
+    app.listen(PORT, () => {
+      console.log(
+        `⚡️[server]: Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+          .yellow.bold
+      );
+    });
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+};
+
+startServer();
+
+// import dotenv from "dotenv";
+// dotenv.config();
+// import sequelize from "database/config/config";
+
+// const startServer = async () => {
+//   try {
+//     await sequelize.sync({ force: true }); // For development, use { alter: true } for production
+//     console.log("Database synced");
+//     // Start your server here
+//   } catch (error) {
+//     console.error("Unable to connect to the database:", error);
+//   }
+// };
+
+// startServer();

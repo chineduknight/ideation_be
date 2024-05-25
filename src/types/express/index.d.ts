@@ -1,7 +1,7 @@
-import { UserInstance } from "database/models"; // Adjust the import path as necessary
+import { User } from "database/models/user";
 
 declare module "express-serve-static-core" {
   interface Request {
-    user?: UserInstance; // Add the user property to the Request interface
+    user?: User;
   }
 }

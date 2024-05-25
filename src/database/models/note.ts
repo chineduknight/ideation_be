@@ -1,42 +1,57 @@
-// src/database/models/note.ts
-import { Model, DataTypes } from "sequelize";
-import { sequelize } from ".";
-// import sequelize from "../config/sequelize";
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  ForeignKey,
+  BelongsTo,
+} from "sequelize-typescript";
+import { User } from "./user";
 
-class Note extends Model {
-  public id!: string;
-  public userId!: string;
-  public title!: string;
-  public content!: string;
-
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+// Define an interface for Note attributes
+export interface NoteAttributes {
+  id?: string;
+  userId: string;
+  title: string;
+  content: string;
 }
 
-Note.init(
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    userId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-  },
-  {
-    sequelize,
-    modelName: "Note",
-  }
-);
+// Define an interface for Note creation attributes
+export interface NoteCreationAttributes extends Omit<NoteAttributes, "id"> {}
+
+@Table({
+  tableName: "Notes",
+  timestamps: true,
+})
+export class Note extends Model<NoteAttributes, NoteCreationAttributes> {
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    primaryKey: true,
+  })
+  id!: string;
+
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.UUID,
+    allowNull: false,
+  })
+  userId!: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  title!: string;
+
+  @Column({
+    type: DataType.TEXT,
+    allowNull: false,
+  })
+  content!: string;
+
+  @BelongsTo(() => User)
+  user!: User;
+}
 
 export default Note;
