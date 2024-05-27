@@ -13,7 +13,7 @@ router.post("/register", authValidator_1.default.validate("register"), auth_2.re
 router.post("/login", authValidator_1.default.validate("login"), auth_2.login);
 router.get("/verifyemail", auth_2.verifyEmail);
 router.get("/me", auth_1.protect, auth_2.getMe);
-router.post("/forgotpassword", authValidator_1.default.validate("checkEmail"), auth_2.forgotPassword);
+router.post("/forgotpassword", authValidator_1.default.validate("forgotPassword"), auth_2.forgotPassword);
 router.put("/resetpassword/:resettoken", authValidator_1.default.validate("resetPassword"), auth_2.resetPassword);
 router.get("/logout", auth_2.logout);
 exports.default = router;

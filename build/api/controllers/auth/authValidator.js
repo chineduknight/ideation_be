@@ -42,7 +42,7 @@ class AuthValidator {
     }
     static forgotPassword() {
         return joi_1.default.object({
-            userNameOrEmail: joi_1.default.string().required(),
+            email: joi_1.default.string().required(),
             url: joi_1.default.string().required(),
         });
     }

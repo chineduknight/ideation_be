@@ -157,14 +157,14 @@ exports.getMe = (0, async_1.default)((req, res, next) => __awaiter(void 0, void 
 }));
 // Forgot Password
 exports.forgotPassword = (0, async_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req.body;
+    const { email, url } = req.body;
     const user = yield user_1.default.findOne({ where: { email: email.toLowerCase() } });
     if (!user) {
         return next(new errorResponse_1.default("There is no user with that email", 404));
     }
     const resetToken = user.generateResetPasswordToken();
     yield user.save();
-    const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/auth/resetpassword/${resetToken}`;
+    const resetUrl = `${url}?token=${resetToken}`;
     const data = {
         to: user.email,
         from: {
