@@ -1,15 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { getSignedJwtToken } from "utils/signToken";
-import ErrorResponse from "utils/errorResponse";
-import asyncHandler from "api/middleware/async";
+import ErrorResponse from "../../../utils/errorResponse";
+import asyncHandler from "../../middleware/async";
 import jwt from "jsonwebtoken";
-import sendEmail from "utils/Handlebars";
+import sendEmail from "../../../utils/Handlebars";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { validateEmail } from "utils/validateStringType";
-import { User, UserCreationAttributes } from "database/models/user";
 import { Op } from "sequelize";
-import { JwtPayload } from "utils/signToken";
+import User, { UserCreationAttributes } from "../../../database/models/user";
+import { getSignedJwtToken, JwtPayload } from "../../../utils/signToken";
+import { validateEmail } from "../../../utils/validateStringType";
 
 // Register User
 export const register = asyncHandler(

@@ -1,6 +1,6 @@
 import ErrorResponse from "../../utils/errorResponse";
 import "colors";
-// import sentry from "utils/sentry";
+// import sentry from '../../utils/sentry';
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;

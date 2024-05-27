@@ -5,9 +5,9 @@ import {
   getNote,
   updateNote,
   deleteNote,
-} from "api/controllers/note/note";
-import { protect } from "api/middleware/auth";
-import NoteValidator from "api/controllers/note/noteValidator";
+} from "../controllers/note/note";
+import { protect } from "../middleware/auth";
+import NoteValidator from "../controllers/note/noteValidator";
 
 const router = express.Router();
 

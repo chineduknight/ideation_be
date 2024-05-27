@@ -1,7 +1,7 @@
-import asyncHandler from "api/middleware/async";
+import asyncHandler from "../../middleware/async";
 import { Request, Response, NextFunction } from "express";
-import { Note, NoteCreationAttributes } from "database/models/note";
-import ErrorResponse from "utils/errorResponse";
+import { Note, NoteCreationAttributes } from "../../../database/models/note";
+import ErrorResponse from "../../../utils/errorResponse";
 
 // Helper function to validate user ID
 const validateUserId = (userId: any, next: NextFunction) => {

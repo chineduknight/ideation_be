@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize-typescript";
-import { User } from "database/models/user";
+import { User } from "../models/user";
 import { Note } from "../models/note";
 const sequelize = new Sequelize({
   storage: ":memory:",

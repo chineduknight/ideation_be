@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "./async";
-import ErrorResponse from "utils/errorResponse";
-import { User } from "database/models/user";
-import { JwtPayload } from "utils/signToken";
+import ErrorResponse from "../../utils/errorResponse";
+import { User } from "../../database/models/user";
+import { JwtPayload } from "../../utils/signToken";
 
 // Protect routes
 export const protect = asyncHandler(async (req, res, next) => {

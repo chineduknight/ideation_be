@@ -1,4 +1,5 @@
-import { protect } from "api/middleware/auth";
+import { protect } from "../middleware/auth";
+// import { protect } from "../ api/middleware/auth";
 import {
   register,
   verifyEmail,
@@ -9,7 +10,7 @@ import {
   logout,
 } from "../controllers/auth/auth";
 import { Router } from "express";
-import AuthValidator from "api/controllers/auth/authValidator";
+import AuthValidator from '../controllers/auth/authValidator';
 const router = Router();
 
 router.post("/register", AuthValidator.validate("register"), register);

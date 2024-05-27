@@ -9,7 +9,7 @@ import xss from "xss-clean";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import cors from "cors";
-import sequelize from "database/config/config";
+import sequelize from '../database/config/config';
 const app = express();
 
 // Body parser
@@ -101,7 +101,7 @@ startServer();
 
 // import dotenv from "dotenv";
 // dotenv.config();
-// import sequelize from "database/config/config";
+// import sequelize from '../database/config/config';
 
 // const startServer = async () => {
 //   try {
