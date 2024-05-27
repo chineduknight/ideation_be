@@ -181,7 +181,7 @@ export const getMe = asyncHandler(
 // Forgot Password
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email } = req.body;
+    const { email, url } = req.body;
 
     const user = await User.findOne({ where: { email: email.toLowerCase() } });
 
@@ -192,9 +192,7 @@ export const forgotPassword = asyncHandler(
     const resetToken = user.generateResetPasswordToken();
     await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/api/v1/auth/resetpassword/${resetToken}`;
+    const resetUrl = `${url}?token=${resetToken}`;
 
     const data = {
       to: user.email,

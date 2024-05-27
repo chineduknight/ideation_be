@@ -54,7 +54,7 @@ export default class AuthValidator {
 
   static forgotPassword(): ObjectSchema {
     return Joi.object({
-      userNameOrEmail: Joi.string().required(),
+      email: Joi.string().required(),
       url: Joi.string().required(),
     });
   }
