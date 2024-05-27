@@ -18,6 +18,7 @@ export default class NoteValidator {
     return Joi.object({
       title: Joi.string().min(3).max(255).required(),
       content: Joi.string().required(),
+      userId: Joi.string().required(),
     });
   }
 
@@ -25,6 +26,7 @@ export default class NoteValidator {
     return Joi.object({
       title: Joi.string().min(3).max(255).optional(),
       content: Joi.string().optional(),
+      userId: Joi.string().required(),
     });
   }
 }

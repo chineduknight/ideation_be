@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "./async";
 import ErrorResponse from "utils/errorResponse";
 import { User } from "database/models/user";
+import { JwtPayload } from "utils/signToken";
 
 // Protect routes
 export const protect = asyncHandler(async (req, res, next) => {
@@ -21,13 +22,18 @@ export const protect = asyncHandler(async (req, res, next) => {
   try {
     // Verify token
     const jwtSecret = process.env.JWT_SECRET as string;
-    const decoded: any = jwt.verify(token, jwtSecret);
-
-    req.user = await User.findByPk(decoded.id, {});
-    if (!req.user) {
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const user = await User.findByPk(decoded.id, {});
+    if (!user) {
       return next(
         new ErrorResponse("Not authorized to access this route", 401)
       );
+    }
+    // Append user to request body or query
+    if (req.method === "GET") {
+      req.query.userId = decoded.id;
+    } else {
+      req.body.userId = decoded.id;
     }
     next();
   } catch (err) {
@@ -50,8 +56,7 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
       // return next(new ErrorResponse('Not authorized to access this route', 401));
       // Verify token
       const jwtSecret = process.env.JWT_SECRET as string;
-      const decoded: any = jwt.verify(token, jwtSecret);
-
+      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
       req.user = await User.findByPk(decoded.id);
     }
     next();

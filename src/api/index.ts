@@ -16,10 +16,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const whitelist = ["http://localhost:3666"];
+const whitelist =
+  process.env.NODE_ENV === "development"
+    ? [/^http:\/\/localhost:\d+$/] // Allows any localhost origin in development mode
+    : ["http://chienduknight.com"];
+console.log("whitelist:", whitelist);
 const corsOptions = {
   origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
+    if (
+      whitelist.some((allowedOrigin) =>
+        typeof allowedOrigin === "string"
+          ? allowedOrigin === origin
+          : allowedOrigin.test(origin)
+      ) ||
+      !origin
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"), false);
@@ -35,7 +46,16 @@ app.use(cors(corsOptions));
 app.use(helmet());
 
 // Prevent XSS attacks
-app.use(xss());
+app.use((req, res, next) => {
+  if (
+    (req.path === "/api/notes" && req.method === "POST") ||
+    (req.path.startsWith("/api/notes/") && req.method === "PUT")
+  ) {
+    // Skip xss-clean for note creation and updating routes
+    return next();
+  }
+  xss()(req, res, next);
+});
 
 // Rate limiting
 const limiter = rateLimit({

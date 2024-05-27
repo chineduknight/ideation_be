@@ -1,29 +1,26 @@
 import { Request, Response, NextFunction } from "express";
-import { getSignedJwtToken } from "../../../utils/signToken";
-import ErrorResponse from "../../../utils/errorResponse";
-import asyncHandler from "../../middleware/async";
+import { getSignedJwtToken } from "utils/signToken";
+import ErrorResponse from "utils/errorResponse";
+import asyncHandler from "api/middleware/async";
 import jwt from "jsonwebtoken";
-import sendEmail from "../../../utils/Handlebars";
+import sendEmail from "utils/Handlebars";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { validateEmail } from "utils/validateStringType";
-import { User, UserAttributes } from "database/models/user";
+import { User, UserCreationAttributes } from "database/models/user";
 import { Op } from "sequelize";
+import { JwtPayload } from "utils/signToken";
 
-// @desc      Register user
-// @route     POST /api/v1/auth/register
-// @access    Public
+// Register User
 export const register = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { username, email, password } = req.body;
-    console.log("userName:", username);
-    // console.log("email:", email)
+    const { username, email, password, url } = req.body;
 
     const existingEmail = await User.findOne({
       where: { email: email.toLowerCase() },
     });
     if (existingEmail) {
-      return next(new ErrorResponse("This email already taken,", 400));
+      return next(new ErrorResponse("This email is already taken", 400));
     }
 
     const existingUserName = await User.findOne({
@@ -32,23 +29,21 @@ export const register = asyncHandler(
       },
     });
     if (existingUserName) {
-      return next(new ErrorResponse("This username already taken", 400));
+      return next(new ErrorResponse("This username is already taken", 400));
     }
 
-    // Create user
     // Create user
     const user = await User.create({
       username: username.toLowerCase(),
       email: email.toLowerCase(),
       password: password,
-    } as UserAttributes);
+    } as UserCreationAttributes);
+
     // Generate verification token
     const verificationToken = user.generateVerificationToken();
 
     // Create verification URL
-    const verificationUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/api/v1/auth/verifyemail?token=${verificationToken}`;
+    const verificationUrl = `${url}?token=${verificationToken}`;
 
     // Email message
     const data = {
@@ -67,29 +62,20 @@ export const register = asyncHandler(
 
     try {
       await sendEmail.send(data);
-
       res.status(200).json({
         success: true,
         data: "Verification email sent",
       });
     } catch (err) {
       console.error(err);
-      user.destroy();
+      await user.destroy();
       return next(new ErrorResponse("Email could not be sent", 500));
     }
-
-    // send email
-    res.status(200).json({
-      success: true,
-      data: "Email should be sent here" + user,
-    });
   }
 );
 
 // Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
-  user.lastLoginAt = new Date();
-  user.save();
+const sendTokenResponse = (user: User, statusCode: number, res: Response) => {
   // Create token
   const token = getSignedJwtToken(user.id);
 
@@ -100,21 +86,9 @@ const sendTokenResponse = (user, statusCode, res) => {
         Number(process.env.JWT_COOKIE_EXPIRE) * ONE_DAY_IN_MILLISECONDS
     ),
     httpOnly: true,
-    // this video explians the use of strict
-    //https://www.youtube.com/watch?v=aUF2QCEudPo
-    // sameSite: 'strict',
-    sameSite: "none",
-    secure: true,
+    sameSite: "none" as const,
+    secure: process.env.NODE_ENV !== "development",
   };
-  if (
-    process.env.NODE_ENV === "production" ||
-    process.env.NODE_ENV === "staging"
-  ) {
-    options["secure"] = true; // set this to false temporarily
-  }
-  if (process.env.NODE_ENV === "development" && res.frompostman) {
-    options["secure"] = false;
-  }
 
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
@@ -122,9 +96,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   });
 };
 
-// @desc      Verify email
-// @route     GET /api/v1/auth/verifyemail
-// @access    Public
+// Verify Email
 export const verifyEmail = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { token } = req.query;
@@ -134,9 +106,11 @@ export const verifyEmail = asyncHandler(
     }
 
     try {
-      const decoded = jwt.verify(token as string, process.env.JWT_SECRET!);
-
-      const user = await User.findByPk((decoded as any).id);
+      const decoded = jwt.verify(
+        token as string,
+        process.env.JWT_SECRET!
+      ) as JwtPayload;
+      const user = await User.findByPk(decoded.id);
 
       if (!user) {
         return next(new ErrorResponse("No user found with this token", 404));
@@ -162,52 +136,50 @@ export const verifyEmail = asyncHandler(
   }
 );
 
-// @desc      Login user
-// @route     POST /api/v1/auth/login
-// @access    Public
-export const login = asyncHandler(async (req, res, next) => {
-  const { userNameOrEmail, password } = req.body;
-  res.frompostman = req.headers.frompostman;
-  const dataType = validateEmail(userNameOrEmail) ? "email" : "username";
-  console.log("dataType:", dataType);
-  // Check for user
-  const user = await User.findOne({
-    where: { [dataType]: { [Op.iLike]: userNameOrEmail.toLowerCase() } },
-  });
+// Login User
+export const login = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { userNameOrEmail, password } = req.body;
 
-  if (!user || !user.password) {
-    return next(new ErrorResponse("Invalid credentials....", 404));
+    const dataType = validateEmail(userNameOrEmail) ? "email" : "username";
+
+    // Check for user
+    const user = await User.findOne({
+      where: { [dataType]: { [Op.iLike]: userNameOrEmail.toLowerCase() } },
+    });
+
+    if (!user || !user.password) {
+      return next(new ErrorResponse("Invalid credentials", 404));
+    }
+    if (!user.isVerified) {
+      return next(new ErrorResponse("Please verify your email", 404));
+    }
+
+    // Check if password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return next(new ErrorResponse("Invalid credentials", 404));
+    }
+
+    sendTokenResponse(user, 200, res);
   }
-  if (!user.isVerified) {
-    return next(new ErrorResponse("Please verify your email", 404));
+);
+
+// Get Current Logged In User
+export const getMe = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = await User.findByPk(req.query.userId as string);
+    if (!user) {
+      return next(new ErrorResponse("User not found", 404));
+    }
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
   }
-  // Check if password matches
-  const isMatch = await bcrypt.compare(password, user.password);
+);
 
-  if (!isMatch) {
-    return next(new ErrorResponse("Invalid credentials", 404));
-  }
-
-  sendTokenResponse(user, 200, res);
-});
-
-// @desc      Get current logged in user
-// @route     POST /api/v1/auth/me
-// @access    Private
-export const getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.user.id, {});
-  if (!user) {
-    return next(new ErrorResponse("User not found", 404));
-  }
-  res.status(200).json({
-    success: true,
-    data: user,
-  });
-});
-
-// @desc      Starts password reset process
-// @route     POST /api/v1/auth/forgotPassword
-// @access    Public
+// Forgot Password
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
@@ -257,9 +229,7 @@ export const forgotPassword = asyncHandler(
   }
 );
 
-// @desc      Resets password
-// @route     PUT /api/v1/auth/resetPassword
-// @access    Public
+// Reset Password
 export const resetPassword = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const resetPasswordToken = crypto
@@ -289,12 +259,10 @@ export const resetPassword = asyncHandler(
   }
 );
 
-// @desc     Logout User
-// @route     GET /api/v1/auth/logout
-// @access    Public
+// Logout User
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   res.cookie("token", "none", {
-    expires: new Date(Date.now() + 10 * 1000), // 10 seconds in the past
+    expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
   });
 

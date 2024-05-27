@@ -37,15 +37,16 @@ export default class AuthValidator {
 
   static register(): ObjectSchema {
     return Joi.object({
-      userName: Joi.string().min(3).max(30).required(),
+      username: Joi.string().min(3).max(30).required(),
       email: Joi.string().email().required(),
       password: Joi.string().min(6).required(),
+      url: Joi.string().required(),
     });
   }
 
   static googleAuth(): ObjectSchema {
     return Joi.object({
-      userName: Joi.string().min(3).max(30).required(),
+      username: Joi.string().min(3).max(30).required(),
       email: Joi.string().email().required(),
       image: Joi.string(),
     });
