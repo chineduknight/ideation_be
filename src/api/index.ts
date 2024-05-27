@@ -19,7 +19,8 @@ app.use(express.urlencoded({ extended: false }));
 const whitelist =
   process.env.NODE_ENV === "development"
     ? [/^http:\/\/localhost:\d+$/] // Allows any localhost origin in development mode
-    : ["https://knight-noteapp.netlify.app"];
+    : [process.env.REACT_APP_URL];
+console.log("process.env.REACT_APP_URL:", process.env.REACT_APP_URL);
 console.log("whitelist:", whitelist);
 const corsOptions = {
   origin: function (origin, callback) {
