@@ -9,7 +9,7 @@ import xss from "xss-clean";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import cors from "cors";
-import sequelize from '../database/config/config';
+import sequelize from "../database/config/config";
 const app = express();
 
 // Body parser
@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 const whitelist =
   process.env.NODE_ENV === "development"
     ? [/^http:\/\/localhost:\d+$/] // Allows any localhost origin in development mode
-    : ["http://chienduknight.com"];
+    : ["https://knight-noteapp.netlify.app"];
 console.log("whitelist:", whitelist);
 const corsOptions = {
   origin: function (origin, callback) {
